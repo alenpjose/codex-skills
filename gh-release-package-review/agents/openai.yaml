@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Release Package Review"
+  short_description: "Review and confirm release package contents"
+  default_prompt: "Use $gh-release-package-review to decide which files should be included in this GitHub release package."
