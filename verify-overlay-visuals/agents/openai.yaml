@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify Overlay Visuals"
+  short_description: "Check overlay layout, branding, and legibility"
+  default_prompt: "Use $verify-overlay-visuals to verify this overlay across target canvases, scales, and text lengths."
