@@ -1,0 +1,4 @@
+interface:
+  display_name: "Package Windows OBS Plugin"
+  short_description: "Build and verify Windows OBS distributions"
+  default_prompt: "Use $package-windows-obs-plugin to build and verify the DLL, portable ZIP, installer, and uninstall lifecycle."
