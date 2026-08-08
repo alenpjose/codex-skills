@@ -1,0 +1,28 @@
+{
+  "release": "curious-bipedal-obs-overlay",
+  "requirements": [
+    {"id":"build-x64","claim":"Pinned OBS 32.1.2 build produces an x64 plugin DLL for the release commit","required_level":"build","required":true,"evidence":[]},
+    {"id":"package-runtime","claim":"Portable package contains only required runtime files, notices, and minimal documentation","required_level":"build","required":true,"evidence":[]},
+    {"id":"approved-assets","claim":"Packaged approved assets match repository SHA-256 values","required_level":"build","required":true,"evidence":[]},
+    {"id":"obs-load","claim":"Final DLL loads and registers in OBS Studio 32.1.2","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"aitum-load","claim":"Aitum Multistream and Aitum Vertical load in the test host","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"source-isolation","claim":"Two newly created sources retain independent settings, timers, bindings, and hotkeys","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"main-routing","claim":"Landscape timer follows only the main OBS stream","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"vertical-routing","claim":"Vertical timer follows only the selected Aitum Vertical output","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"missing-output-recovery","claim":"A mismatched Aitum output leaves rendering stable and recovers after the selected output becomes available","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"manual-controls","claim":"Manual start, pause, and reset affect only the intended source","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"hotkeys","claim":"F9/F10 and F11/F12 test assignments affect only their registered source","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"network-isolation","claim":"OBS WebSocket and both RTMP listeners are authenticated where applicable and loopback-only","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"landscape-layout","claim":"2560x1440 layout is unclipped and legible","required_level":"user_acceptance","required":true,"evidence":[]},
+    {"id":"vertical-layout","claim":"1440x2560 layout is unclipped and legible","required_level":"user_acceptance","required":true,"evidence":[]},
+    {"id":"approved-logo","claim":"Planet curve and detached floating dot remain visible","required_level":"user_acceptance","required":true,"evidence":[]},
+    {"id":"secondary-text","claim":"LOG, time, and date remain legible at 80 percent without bubble growth","required_level":"user_acceptance","required":true,"evidence":[]},
+    {"id":"dynamic-width","claim":"Short, normal, and long titles size the rounded session panel without clipping or cap distortion","required_level":"user_acceptance","required":true,"evidence":[]},
+    {"id":"persistence","claim":"Settings, hotkeys, and documented timer state persist across restart","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"standard-installation","claim":"Installer deploys exact packaged files to the documented shared ProgramData OBS plugin location","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"installer-lifecycle","claim":"Disposable Windows lifecycle test creates an uninstaller, matches installed hashes, and removes runtime files","required_level":"real_runtime","required":true,"evidence":[]},
+    {"id":"post-uninstall-source","claim":"After uninstall and OBS restart, prior scene items are unavailable/red and no overlay renders","required_level":"user_acceptance","required":true,"evidence":[]},
+    {"id":"artifact-outer-contents","claim":"Downloaded Actions outer ZIP contains the installer, portable ZIP, raw DLL, and checksums with verified inner hashes","required_level":"user_acceptance","required":true,"evidence":[]},
+    {"id":"artifact-delivery","claim":"Final artifact is accessible and its digest is recorded","required_level":"user_acceptance","required":true,"evidence":[]}
+  ]
+}
