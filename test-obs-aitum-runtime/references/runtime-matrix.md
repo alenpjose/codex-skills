@@ -19,4 +19,6 @@ Use distinct source names and values so leakage is visible.
 
 Record the OBS version, Aitum versions, plugin DLL hash, scene collection, output names, canvas dimensions, and timestamps with the evidence.
 
+OBS WebSocket automation may prove settings isolation by changing one source, reading both sources, and restoring the original settings in a `finally`-safe workflow. It may invoke main OBS output requests and Aitum Vertical vendor requests, but request success and output-active status do not prove timer routing. Promote routing cases to `passed` only after comparing timestamped before/during/after renders or an equivalent direct timer measurement for both sources.
+
 Generate the matrix with the full commit SHA, final plugin DLL path, and exact OBS/Aitum versions. Record each new source UUID after creation. For every case, replace `not_run` with `passed`, `failed`, or `unsupported`, and attach timestamped evidence paths plus measured timer observations. Record start/stop elapsed values for both sources, not just expected labels. Before starting OBS, record listener addresses for WebSocket and both RTMP endpoints. Reject a host as isolated if any listener accepts non-loopback traffic or WebSocket authentication is disabled. Reject runtime evidence if the DLL hash or last-write timestamp changes after the matrix begins.
