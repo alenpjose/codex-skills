@@ -20,6 +20,7 @@ $ErrorActionPreference = 'Stop'
 
 function ConvertTo-HashtableDeep($Value) {
     if ($null -eq $Value) { return $null }
+    if ($Value -is [string] -or $Value.GetType().IsPrimitive -or $Value -is [decimal]) { return $Value }
     if ($Value -is [Collections.IDictionary]) {
         $copy = [ordered]@{}
         foreach ($key in $Value.Keys) { $copy[$key] = ConvertTo-HashtableDeep $Value[$key] }
@@ -66,7 +67,7 @@ function Send-ObsMessage([Net.WebSockets.ClientWebSocket] $Socket, [hashtable] $
     $json = $Message | ConvertTo-Json -Depth 20 -Compress
     $bytes = [Text.Encoding]::UTF8.GetBytes($json)
     $Socket.SendAsync([ArraySegment[byte]]::new($bytes), [Net.WebSockets.WebSocketMessageType]::Text, $true,
-        [Threading.CancellationToken]::None).GetAwaiter().GetResult()
+        [Threading.CancellationToken]::None).GetAwaiter().GetResult() | Out-Null
 }
 
 function Invoke-ObsRequest([Net.WebSockets.ClientWebSocket] $Socket, [string] $Type, [hashtable] $Data = @{}) {
@@ -204,6 +205,7 @@ try {
     Set-Case $matrix 'source-isolation-vertical' $verticalIsolationStatus @{ target_changed=$verticalChanged; peer_unchanged=$mainStable } @($snapshotPath)
     Invoke-ObsRequest $socket 'SetInputSettings' @{ inputName=$vertical; inputSettings=$verticalSettings; overlay=$false } | Out-Null
     $verticalRestorePending = $false
+    Start-Sleep -Milliseconds 300
 
     $shots = @()
     if ($CaptureScreenshots) {
