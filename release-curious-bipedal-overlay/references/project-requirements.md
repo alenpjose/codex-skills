@@ -12,8 +12,8 @@
 ## Runtime
 
 - Create separate landscape and vertical sources; never reuse one source when testing isolation.
-- Landscape: 2560Ã—1440, timer bound to the main OBS stream.
-- Vertical: 1440Ã—2560, timer bound to the selected named Aitum Vertical output.
+- Landscape: 2560×1440, timer bound to the main OBS stream.
+- Vertical: 1440×2560, timer bound to the selected named Aitum Vertical output.
 - Verify distinct titles, LOG values, dimensions, timer state, output binding, and hotkeys.
 - Test F9/F10 for landscape start/reset and F11/F12 for vertical start/reset when those assignments are used by the test scene.
 - Preserve settings and documented elapsed state across restart.
