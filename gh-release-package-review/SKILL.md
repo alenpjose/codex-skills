@@ -82,110 +82,16 @@ After packaging, report:
 - Explain that GitHub Actions downloads an outer artifact ZIP. Identify the installer, portable ZIP, raw binary, and checksums inside it.
 - Treat a 404, authentication mismatch, expired link, or untested route as unresolved delivery.
 - Prefer a GitHub prerelease or release asset when a stable, direct file download is required; obtain authorization before publishing a release.
-- For connected-app Git writes, compare the returned remote Git blob SHA with `git hash-object <file>` before creating a t…20573 tokens truncated…alueError(f"{rid}: evidence must be an array")
+- For connected-app Git writes, compare the returned remote Git blob SHA with `git hash-object <file>` before creating a tree or moving a ref. Re-upload in bounded chunks if transport output truncation is possible.
 
-        best_level = None
-        failed = False
-        unsupported = False
-        usable = []
-        all_artifacts = []
-        for entry_index, entry in enumerate(evidence):
-            if not isinstance(entry, dict):
-                raise ValueError(f"{rid}: evidence[{entry_index}] must be an object")
-            level = entry.get("level")
-            status = entry.get("status")
-            if level not in LEVELS or status not in STATUSES:
-                raise ValueError(f"{rid}: evidence[{entry_index}] has invalid level or status")
-            if status == "passed" and not str(entry.get("artifact", "")).strip():
-                raise ValueError(f"{rid}: passed evidence[{entry_index}] needs an artifact")
-            artifact = str(entry.get("artifact", "")).strip()
-            if artifact:
-                all_artifacts.append({"artifact": artifact, "level": level, "status": status, "superseded": bool(entry.get("superseded", False))})
-            if entry.get("superseded", False):
-                continue
-            if status == "passed":
-                verification = validate_passed_entry(entry, rid, entry_index, data["identity"], manifest_dir)
-                all_artifacts[-1]["verification"] = verification
-                usable.append(entry)
-                if best_level is None or LEVELS[level] > LEVELS[best_level]:
-                    best_level = level
-            elif status == "failed":
-                failed = True
-            else:
-                unsupported = True
+## Practical Checks
 
-        sufficient = best_level is not None and LEVELS[best_level] >= LEVELS[required_level]
-        if failed:
-            status = "failed"
-        elif sufficient:
-            status = "passed"
-        elif unsupported:
-            status = "unsupported"
-        else:
-            status = "missing"
-        results.append(
-            {
-                "id": rid,
-                "claim": claim,
-                "required": bool(requirement.get("required", True)),
-                "required_level": required_level,
-                "best_level": best_level,
-                "status": status,
-                "artifacts": all_artifacts,
-            }
-        )
+Use local tooling where available:
 
-    if canonical is not None and seen_ids != set(canonical):
-        missing = sorted(set(canonical) - seen_ids)
-        extra = sorted(seen_ids - set(canonical))
-        raise ValueError(f"canonical requirement IDs differ; missing={missing}, extra={extra}")
-    required_failures = [r for r in results if r["required"] and r["status"] != "passed"]
-    return {
-        "schema_version": 1,
-        "validator": "validate-release-evidence/1",
-        "release": data.get("release"),
-        "identity": data.get("identity", {}),
-        "status": "validated" if not required_failures else "not validated",
-        "counts": {name: sum(r["status"] == name for r in results) for name in ("passed", "missing", "failed", "unsupported")},
-        "requirements": results,
-    }
+- Inspect `git status --short` to avoid packaging unrelated local changes by accident. In a detached artifact directory, proceed with filesystem/archive inspection and explicitly mark Git context unavailable.
+- Use `git ls-files` for tracked files and filesystem listing for generated release outputs.
+- Prefer project release scripts over inventing package contents, then audit their output before upload.
+- Open existing archives with listing commands before publishing.
+- Search for likely secrets before packaging: `.env`, `secret`, `token`, `key`, `pem`, `p12`, `credentials`, `password`.
 
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--manifest", required=True, type=Path)
-    parser.add_argument("--requirements-schema", type=Path)
-    parser.add_argument("--json", action="store_true", dest="as_json")
-    parser.add_argument("--output", type=Path)
-    args = parser.parse_args()
-    try:
-        data = json.loads(args.manifest.read_text(encoding="utf-8"))
-        if not isinstance(data, dict):
-            return fail("root must be an object")
-        if not isinstance(data.get("requirements"), list) or not data["requirements"]:
-            return fail("requirements must be a non-empty array")
-        validate_identity(data)
-        canonical = None
-        if args.requirements_schema:
-            schema = json.loads(args.requirements_schema.read_text(encoding="utf-8"))
-            canonical = canonical_requirements(schema)
-        result = evaluate(data, args.manifest.resolve().parent, canonical)
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
-        return fail(str(exc))
-
-    if args.as_json or args.output:
-        rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
-        if args.output:
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_text(rendered, encoding="utf-8")
-        else:
-            print(rendered, end="")
-    else:
-        print(f"{result['status']}: {result['counts']}")
-        for item in result["requirements"]:
-            print(f"[{item['status']}] {item['id']}: required={item['required_level']} best={item['best_level'] or '-'}")
-    return 0 if result["status"] == "validated" else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+Never upload or attach a release artifact until the requested release contents are either clearly conventional or explicitly confirmed by the user.
