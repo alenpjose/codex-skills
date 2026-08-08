@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Curious Bipedal Overlay"
+  short_description: "Coordinate the Curious Bipedal release gate"
+  default_prompt: "Use $release-curious-bipedal-overlay to validate and prepare a Curious Bipedal OBS Overlay release."
