@@ -34,7 +34,7 @@ Copy-Item -Path (Join-Path $dataSource '*') -Destination $dataTargetFull -Recurs
 New-Item -ItemType Directory -Force -Path (Join-Path $target 'config\obs-studio') | Out-Null
 $portableMarker = Join-Path $target 'portable_mode.txt'
 New-Item -ItemType File -Path $portableMarker -Force | Out-Null
-$plan.launch_command = (Join-Path $target 'bin\64bit\obs64.exe') + ' --portable --disable-shutdown-check'
+$plan.launch_command = (Join-Path $target 'bin\64bit\obs64.exe') + ' --portable --disable-updater'
 $plan.websocket_policy = 'Before launch, require authentication and verify the listener is bound only to 127.0.0.1 or ::1.'
 $plan | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $target 'codex-test-host.json') -Encoding UTF8
 $plan | ConvertTo-Json
