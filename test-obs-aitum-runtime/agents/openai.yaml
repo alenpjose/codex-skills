@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test OBS and Aitum Runtime"
+  short_description: "Run isolated OBS and Aitum smoke tests"
+  default_prompt: "Use $test-obs-aitum-runtime to design and execute an isolated OBS and Aitum runtime smoke test."
