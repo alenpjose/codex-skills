@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit OBS Native Plugin"
+  short_description: "Audit OBS plugin API and lifetime safety"
+  default_prompt: "Use $audit-obs-native-plugin to audit this native OBS plugin and separate confirmed defects from runtime hypotheses."
