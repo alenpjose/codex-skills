@@ -12,6 +12,7 @@ param(
     [int] $ObservationSeconds = 3,
     [switch] $CaptureScreenshots,
     [switch] $ExerciseButtons,
+    [switch] $ExerciseHotkeys,
     [switch] $ExerciseOutputs,
     [switch] $Apply
 )
@@ -98,6 +99,7 @@ function Save-Matrix([hashtable] $Matrix, [string] $Path) {
 
 function Save-SourceScreenshot([Net.WebSockets.ClientWebSocket] $Socket, [string] $Source, [int] $Width, [int] $Height,
                                [string] $Path) {
+    Start-Sleep -Milliseconds 150
     $response = Invoke-ObsRequest $Socket 'GetSourceScreenshot' @{
         sourceName = $Source; imageFormat = 'png'; imageWidth = $Width; imageHeight = $Height; imageCompressionQuality = -1
     }
@@ -132,6 +134,7 @@ $plan = [ordered]@{
     sources = @($main, $vertical)
     capture_screenshots = [bool]$CaptureScreenshots
     exercise_buttons = [bool]$ExerciseButtons
+    exercise_hotkeys = [bool]$ExerciseHotkeys
     exercise_outputs = [bool]$ExerciseOutputs
     mutations_restored = $true
 }
@@ -216,13 +219,60 @@ try {
     }
 
     if ($ExerciseButtons) {
-        foreach ($source in @($main, $vertical)) {
-            Invoke-ObsRequest $socket 'PressInputPropertiesButton' @{ inputName=$source; propertyName='start_pause' } | Out-Null
+        $buttonEvidence = @()
+        foreach ($source in @($main, $vertical)) { Invoke-ObsRequest $socket 'PressInputPropertiesButton' @{ inputName=$source; propertyName='reset' } | Out-Null }
+        foreach ($target in @(@{source=$main;label='main'}, @{source=$vertical;label='vertical'})) {
+            Start-Sleep -Milliseconds 300
+            if ($CaptureScreenshots) {
+                foreach ($capture in @(@{source=$main;width=2560;height=1440;label='landscape'}, @{source=$vertical;width=1440;height=2560;label='vertical'})) {
+                    $path = Join-Path $output "buttons-$($target.label)-before-$($capture.label).png"
+                    Save-SourceScreenshot $socket $capture.source $capture.width $capture.height $path | Out-Null
+                    $buttonEvidence += $path
+                }
+            }
+            Invoke-ObsRequest $socket 'PressInputPropertiesButton' @{ inputName=$target.source; propertyName='start_pause' } | Out-Null
             Start-Sleep -Seconds $ObservationSeconds
-            Invoke-ObsRequest $socket 'PressInputPropertiesButton' @{ inputName=$source; propertyName='start_pause' } | Out-Null
-            Invoke-ObsRequest $socket 'PressInputPropertiesButton' @{ inputName=$source; propertyName='reset' } | Out-Null
+            if ($CaptureScreenshots) {
+                foreach ($capture in @(@{source=$main;width=2560;height=1440;label='landscape'}, @{source=$vertical;width=1440;height=2560;label='vertical'})) {
+                    $path = Join-Path $output "buttons-$($target.label)-running-$($capture.label).png"
+                    Save-SourceScreenshot $socket $capture.source $capture.width $capture.height $path | Out-Null
+                    $buttonEvidence += $path
+                }
+            }
+            Invoke-ObsRequest $socket 'PressInputPropertiesButton' @{ inputName=$target.source; propertyName='start_pause' } | Out-Null
+            Invoke-ObsRequest $socket 'PressInputPropertiesButton' @{ inputName=$target.source; propertyName='reset' } | Out-Null
         }
-        Set-Case $matrix 'manual-controls' 'unsupported' @{ reason='buttons-invoked-but-timer-text-requires-screenshot-or-visible-host-review' } @($shots.path)
+        Set-Case $matrix 'manual-controls' 'unsupported' @{ reason='buttons-invoked; promote only after both-source render review'; observation_seconds=$ObservationSeconds } $buttonEvidence
+    }
+
+    if ($ExerciseHotkeys) {
+        $hotkeyEvidence = @()
+        foreach ($key in @('OBS_KEY_F10','OBS_KEY_F12')) {
+            Invoke-ObsRequest $socket 'TriggerHotkeyByKeySequence' @{ keyId=$key; keyModifiers=@{shift=$false;control=$false;alt=$false;command=$false} } | Out-Null
+        }
+        foreach ($target in @(@{start='OBS_KEY_F9';reset='OBS_KEY_F10';label='main'}, @{start='OBS_KEY_F11';reset='OBS_KEY_F12';label='vertical'})) {
+            Start-Sleep -Milliseconds 300
+            if ($CaptureScreenshots) {
+                foreach ($capture in @(@{source=$main;width=2560;height=1440;label='landscape'}, @{source=$vertical;width=1440;height=2560;label='vertical'})) {
+                    $path = Join-Path $output "hotkeys-$($target.label)-before-$($capture.label).png"
+                    Save-SourceScreenshot $socket $capture.source $capture.width $capture.height $path | Out-Null
+                    $hotkeyEvidence += $path
+                }
+            }
+            Invoke-ObsRequest $socket 'TriggerHotkeyByKeySequence' @{ keyId=$target.start; keyModifiers=@{shift=$false;control=$false;alt=$false;command=$false} } | Out-Null
+            Start-Sleep -Seconds $ObservationSeconds
+            if ($CaptureScreenshots) {
+                foreach ($capture in @(@{source=$main;width=2560;height=1440;label='landscape'}, @{source=$vertical;width=1440;height=2560;label='vertical'})) {
+                    $path = Join-Path $output "hotkeys-$($target.label)-running-$($capture.label).png"
+                    Save-SourceScreenshot $socket $capture.source $capture.width $capture.height $path | Out-Null
+                    $hotkeyEvidence += $path
+                }
+            }
+            foreach ($key in @($target.start,$target.reset)) {
+                Invoke-ObsRequest $socket 'TriggerHotkeyByKeySequence' @{ keyId=$key; keyModifiers=@{shift=$false;control=$false;alt=$false;command=$false} } | Out-Null
+            }
+        }
+        Set-Case $matrix 'source-hotkeys' 'unsupported' @{ reason='key sequences invoked; promote only after both-source render review'; observation_seconds=$ObservationSeconds } $hotkeyEvidence
     }
 
     if ($ExerciseOutputs) {
