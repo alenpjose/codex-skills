@@ -1,0 +1,4 @@
+interface:
+  display_name: "Validate Release Evidence"
+  short_description: "Gate release claims with verifiable evidence"
+  default_prompt: "Use $validate-release-evidence to map these release requirements to evidence and identify unsupported completion claims."
